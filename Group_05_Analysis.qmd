@@ -13,23 +13,59 @@ output:
   pdf_document
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+library(tidyverse)
+library(moderndive)
+library(gapminder)
+library(sjPlot)
+library(stats)
+library(jtools)
+library(skimr)
+library(GGally)
+library(MASS)
+library(dplyr)
+library(knitr)
+library(gridExtra)
+library(kableExtra)
 ```
 
-You can add options to executable code like this
+# Data wrangling
 
 ```{r}
-#| echo: false
-2 * 2
+data5 <-  read.csv('dataset05.csv')
+data5$Region <- as.factor(data5$Region)
+data5$Household.Head.Sex <- as.factor(data5$Household.Head.Sex)
+data5$Type.of.Household <- as.factor(data5$Type.of.Household)
+data5$Electricity <- as.factor(data5$Electricity)
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+# Exploration of data
+
+```{r}
+skim(data5)
+```
+
+# Data visualization
+
+```{r}
+data <- data5%>%
+  mutate(log.Total.Household.Income=log(Total.Household.Income))%>%
+  mutate(log.Total.Food.Expenditure=log(Total.Food.Expenditure))%>%
+  mutate(log.House.Floor.Area=log(House.Floor.Area))%>%
+  mutate(log.Household.Head.Age=log(Household.Head.Age))%>%
+  mutate(log.House.Age=log(House.Age+0.1))%>%
+  mutate(log.Number.of.bedrooms=log(Number.of.bedrooms+0.1))%>%
+  dplyr::select(Total.Number.of.Family.members,
+         log.Total.Household.Income,
+         log.Total.Food.Expenditure,
+         log.House.Floor.Area,
+         Household.Head.Sex,
+         log.Household.Head.Age,
+         Type.of.Household,
+         log.House.Age,
+         log.Number.of.bedrooms,Electricity)
+
+ggpairs(data,upper=list(continuous=wrap("points", alpha=0.4, color="#d73027")),
+lower="blank", axisLabels="none")
+```
