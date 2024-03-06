@@ -1,16 +1,17 @@
 ---
-title: "Group_05_Analysis"
+title: "Group_05"
 format: 
   html:
     embed-resources: true
     code-tools: true
   pdf: default
 editor: visual
+number-sections: true
 execute:
+  echo: true
+  eval: true
   warning: false
   message: false
-output:
-  pdf_document
 ---
 
 ```{r}
@@ -27,45 +28,228 @@ library(dplyr)
 library(knitr)
 library(gridExtra)
 library(kableExtra)
+library(ggplot2)
+library(glm2)
 ```
 
-# Data wrangling
+## Data wrangling
 
 ```{r}
+# Load the CSV file
 data5 <-  read.csv('dataset05.csv')
+
+# Display the structure of the dataframe
+str(data5)
+# Convert specified columns to categorical factors
 data5$Region <- as.factor(data5$Region)
 data5$Household.Head.Sex <- as.factor(data5$Household.Head.Sex)
 data5$Type.of.Household <- as.factor(data5$Type.of.Household)
 data5$Electricity <- as.factor(data5$Electricity)
 
-```
-
-# Exploration of data
-
-```{r}
+# Provide a concise summary of the dataframe
 skim(data5)
 ```
 
-# Data visualization
+In this section the data integrity is checked to ensure there are no missing values, specified variables are converted into categorical factors, and the type of each variable is finally determined.
+
+## Exploratory Data Analysis
 
 ```{r}
-data <- data5%>%
-  mutate(log.Total.Household.Income=log(Total.Household.Income))%>%
-  mutate(log.Total.Food.Expenditure=log(Total.Food.Expenditure))%>%
-  mutate(log.House.Floor.Area=log(House.Floor.Area))%>%
-  mutate(log.Household.Head.Age=log(Household.Head.Age))%>%
-  mutate(log.House.Age=log(House.Age+0.1))%>%
-  mutate(log.Number.of.bedrooms=log(Number.of.bedrooms+0.1))%>%
-  dplyr::select(Total.Number.of.Family.members,
-         log.Total.Household.Income,
-         log.Total.Food.Expenditure,
-         log.House.Floor.Area,
-         Household.Head.Sex,
-         log.Household.Head.Age,
-         Type.of.Household,
-         log.House.Age,
-         log.Number.of.bedrooms,Electricity)
+# Display the summary statistics of the data5
+summary(data5)
 
-ggpairs(data,upper=list(continuous=wrap("points", alpha=0.4, color="#d73027")),
-lower="blank", axisLabels="none")
+# Create histogram plots for continuous variables
+p11 <- ggplot(data5,aes(x = Total.Household.Income)) +
+        geom_histogram(bins = 30, color="white",fill="steelblue")
+p12 <- ggplot(data5,aes(x = Total.Food.Expenditure)) +
+        geom_histogram(bins = 30, color="white",fill="steelblue")
+p13 <- ggplot(data5,aes(x = Household.Head.Age)) +
+        geom_histogram(bins = 30, color="white",fill="steelblue")
+p14 <- ggplot(data5,aes(x = Total.Number.of.Family.members)) +
+        geom_histogram(bins = 30, color="white",fill="steelblue")
+p15 <- ggplot(data5,aes(x = House.Floor.Area)) +
+        geom_histogram(bins = 30, color="white",fill="steelblue")
+p16 <- ggplot(data5,aes(x = House.Age)) +
+        geom_histogram(bins = 30, color="white",fill="steelblue")
+p17 <- ggplot(data5,aes(x = Number.of.bedrooms)) +
+        geom_histogram(bins = 30, color="white",fill="steelblue")
+grid.arrange(p11, p12, p13, p14, p15, p16, p17, ncol=3)
+
+# Create bar plots for categorical variables
+p21 <- ggplot(data5,aes(x = Region)) +
+        geom_bar(aes(fill = Region))
+p22 <- ggplot(data5,aes(x = Household.Head.Sex)) +
+        geom_bar(aes(fill = Household.Head.Sex))
+p23 <- ggplot(data5,aes(x = Type.of.Household)) +
+        geom_bar(aes(fill = Type.of.Household))
+p24 <- ggplot(data5,aes(x = Electricity)) +
+        geom_bar(aes(fill = Electricity))
+grid.arrange(p21, p22, p23, p24, ncol=2)
+
+# Create boxplots for continuous variables
+p31<-ggplot(data=data5,mapping=aes(y=Total.Household.Income))+
+  geom_boxplot(fill="steelblue")
+p32<-ggplot(data=data5,mapping=aes(y=Total.Food.Expenditure))+
+  geom_boxplot(fill="steelblue")
+p33<-ggplot(data=data5,mapping=aes(y=Household.Head.Age))+
+  geom_boxplot(fill="steelblue")
+p34<-ggplot(data=data5,mapping=aes(y=Total.Number.of.Family.members))+
+  geom_boxplot(fill="steelblue")
+p35<-ggplot(data=data5,mapping=aes(y=House.Floor.Area))+
+  geom_boxplot(fill="steelblue")
+p36<-ggplot(data=data5,mapping=aes(y=House.Age))+
+  geom_boxplot(fill="steelblue")
+p37<-ggplot(data=data5,mapping=aes(y=Number.of.bedrooms))+
+  geom_boxplot(fill="steelblue")
+grid.arrange(p31, p32, p33, p34, p35, p36, p37, ncol=3)
+
+# Perform log transformation on selected variables
+data5_log<-data5 %>%
+  mutate(
+    log_Total.Household.Income=log(Total.Household.Income),
+    log_Total.Food.Expenditure=log(Total.Food.Expenditure),
+    log_House.Floor.Area=log(House.Floor.Area),
+    log_House.Age=log1p(House.Age)
+  )
+
+data5_log<-data5_log[,c(-1,-3,-8,-9)]
+
+# Create scatterplots for each predictor variable and response variable
+p41<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=log_Total.Household.Income))+
+  geom_point()
+p42<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=log_Total.Food.Expenditure))+
+  geom_point()
+p43<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=Household.Head.Age))+
+  geom_point()
+p44<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=log_House.Floor.Area))+
+  geom_point()
+p45<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=log_House.Age))+
+  geom_point()
+p46<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=Number.of.bedrooms))+
+  geom_point()
+grid.arrange(p41, p42, p43, p44, p45, p46, ncol=3)
 ```
+
+This section mainly carries out some exploratory analysis of data and data visualization.
+
+First, the statistical summary of the data was performed. Then, histograms and boxplots were drawn for all continuous variables to visually judge their distribution. Variables with skewed distributions were logarithmically transformed. For categorical variables we draw bar plots to visually display their distribution. Finally, scatter plots were drawn for all predictor variables and response variables to determine their relationships.
+
+## Model Construction and Selection
+
+```{r}
+library(car)
+# Fit the Poisson regression model with the log link function
+model_pois <- glm(Total.Number.of.Family.members ~ 
+                   log_Total.Household.Income + 
+                   log_Total.Food.Expenditure + 
+                   Household.Head.Sex + 
+                   Household.Head.Age + 
+                   Type.of.Household +
+                   log_House.Floor.Area + 
+                   log_House.Age + 
+                   Number.of.bedrooms + 
+                   Electricity,
+                   family=poisson(link="log"),
+                   data = data5_log)
+# Summarize the model
+summary(model_pois)
+# Calculate and plot fitted values vs residuals for diagnostic checking
+fitted_values <- fitted(model_pois)
+residuals_values <- residuals(model_pois)
+ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values), 
+       aes(x=Fitted, y=Residuals))+
+  geom_point()+
+  geom_hline(yintercept = 0,linetype = "dashed",color="red")+
+  labs(x="Fitted Values",y="Residuals")
+# Calculate VIF to check for multicollinearity
+vif(model_pois)
+
+# Fit the generalized Poisson regression model
+model_gp <- glm2(Total.Number.of.Family.members ~ 
+                   log_Total.Household.Income + 
+                   log_Total.Food.Expenditure + 
+                   Household.Head.Sex + 
+                   Household.Head.Age + 
+                   Type.of.Household +
+                   log_House.Floor.Area + 
+                   log_House.Age + 
+                   Number.of.bedrooms + 
+                   Electricity,
+                   family=poisson(link="log"),
+                   data = data5_log)
+# Summarize the model
+summary(model_gp)
+# Calculate and plot fitted values vs residuals for diagnostic checking
+fitted_values <- fitted(model_gp)
+residuals_values <- residuals(model_gp)
+ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values), 
+       aes(x=Fitted, y=Residuals))+
+  geom_point()+
+  geom_hline(yintercept = 0,linetype = "dashed",color="red")+
+  labs(x="Fitted Values",y="Residuals")
+# Calculate VIF to check for multicollinearity
+vif(model_gp)
+
+# Fit the negative binomial regression model
+model_nb <- glm.nb(Total.Number.of.Family.members ~ 
+                   log_Total.Household.Income + 
+                   log_Total.Food.Expenditure + 
+                   Household.Head.Sex + 
+                   Household.Head.Age + 
+                   Type.of.Household +
+                   log_House.Floor.Area + 
+                   log_House.Age + 
+                   Number.of.bedrooms + 
+                   Electricity,
+                   data = data5_log)
+# Summarize the model
+summary(model_nb)
+# Calculate and plot fitted values vs residuals for diagnostic checking
+fitted_values <- fitted(model_nb)
+residuals_values <- residuals(model_nb)
+ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values), 
+       aes(x=Fitted, y=Residuals))+
+  geom_point()+
+  geom_hline(yintercept = 0,linetype = "dashed",color="red")+
+  labs(x="Fitted Values",y="Residuals")
+# Calculate VIF to check for multicollinearity
+vif(model_nb)
+
+# Fit the Quasi-Poisson regression model
+model_qp <- glm(Total.Number.of.Family.members ~ 
+                   log_Total.Household.Income + 
+                   log_Total.Food.Expenditure + 
+                   Household.Head.Sex + 
+                   Household.Head.Age + 
+                   Type.of.Household +
+                   log_House.Floor.Area + 
+                   log_House.Age + 
+                   Number.of.bedrooms + 
+                   Electricity,
+                   family=quasipoisson(link="log"),
+                   data = data5_log)
+# Summarize the model
+summary(model_qp)
+# Calculate and plot fitted values vs residuals for diagnostic checking
+fitted_values <- fitted(model_qp)
+residuals_values <- residuals(model_qp)
+ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values), 
+       aes(x=Fitted, y=Residuals))+
+  geom_point()+
+  geom_hline(yintercept = 0,linetype = "dashed",color="red")+
+  labs(x="Fitted Values",y="Residuals")
+# Calculate VIF to check for multicollinearity
+vif(model_qp)
+
+# Perform an analysis of variance (ANOVA) to compare the different models fitted
+anova(model_pois, model_gp, model_nb, model_qp, test = "Chisq")
+
+```
+
+By analyzing our data, the response variable is a count variable, and its variance is less than the mean, which means that there is no overfitting, but there may be an underdispersion problem. In this case, we selected four possible feasible Models are built and compared: the Poisson regression model, the generalized Poisson regression model, the negative binomial regression model, and the Quasi-Possion regression.
+
+After we have built the four models, evaluate them individually and choose the most appropriate one. First review its model summary, including estimates of model coefficients, standard errors, z-statistics, and p-values. Then perform residual analysis and draw residual scatter plots respectively, and compare which model has the smallest AIC value, and then check multicollinearity issues through VIF, and finally use ANOVA to compare the four models.
+
+Finally, based on various evaluation results, the Poisson regression model was selected. As can be seen from the Poisson regression model summary, Total.Household.Income, Total.Food.Expenditure, Household.Head.Sex, Household.Head.Age, Type.of.Household, House.Age, these six household related variables significantly influence the number of people living in a household.Their coefficients represent the change in the log mean of the response variable when the predictor variable increases by one unit.
+
+The coefficients of log_Total.Household.Income and log_Total.Food.Expenditure are negative, meaning that an increase in total household income and food expenditure is associated with a decrease in the number of household members. The positive coefficient of Household.Head.SexMale indicates that male household heads have more family members than female ones. The negative coefficient of Household.Head.Age indicates that the number of family members decreases as the age of the household head increases. The negative coefficient for Type.of.Householdsingle Family indicates that a single household has a smaller number of family members. The negative coefficient for House.Age indicates that the number of family members decreases as the age of the house increases.
