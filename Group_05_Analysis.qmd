@@ -130,6 +130,29 @@ p46<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=Number.of.bed
 grid.arrange(p41, p42, p43, p44, p45, p46, ncol=3)
 ```
 
+```{r}
+#ggpairs plot
+data <- data5%>%
+  mutate(log.Total.Household.Income=log(Total.Household.Income))%>%
+  mutate(log.Total.Food.Expenditure=log(Total.Food.Expenditure))%>%
+  mutate(log.House.Floor.Area=log(House.Floor.Area))%>%
+  mutate(log.Household.Head.Age=log(Household.Head.Age))%>%
+  mutate(log.House.Age=log(House.Age+0.1))%>%
+  mutate(log.Number.of.bedrooms=log(Number.of.bedrooms+0.1))%>%
+  dplyr::select(Total.Number.of.Family.members,
+         log.Total.Household.Income,
+         log.Total.Food.Expenditure,
+         log.House.Floor.Area,
+         Household.Head.Sex,
+         log.Household.Head.Age,
+         Type.of.Household,
+         log.House.Age,
+         log.Number.of.bedrooms,Electricity)
+
+ggpairs(data,upper=list(continuous=wrap("points", alpha=0.4, color="#d73027")),
+lower="blank", axisLabels="none")
+```
+
 This section mainly carries out some exploratory analysis of data and data visualization.
 
 First, the statistical summary of the data was performed. Then, histograms and boxplots were drawn for all continuous variables to visually judge their distribution. Variables with skewed distributions were logarithmically transformed. For categorical variables we draw bar plots to visually display their distribution. Finally, scatter plots were drawn for all predictor variables and response variables to determine their relationships.
