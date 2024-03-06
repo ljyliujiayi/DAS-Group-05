@@ -276,3 +276,76 @@ After we have built the four models, evaluate them individually and choose the m
 Finally, based on various evaluation results, the Poisson regression model was selected. As can be seen from the Poisson regression model summary, Total.Household.Income, Total.Food.Expenditure, Household.Head.Sex, Household.Head.Age, Type.of.Household, House.Age, these six household related variables significantly influence the number of people living in a household.Their coefficients represent the change in the log mean of the response variable when the predictor variable increases by one unit.
 
 The coefficients of log_Total.Household.Income and log_Total.Food.Expenditure are negative, meaning that an increase in total household income and food expenditure is associated with a decrease in the number of household members. The positive coefficient of Household.Head.SexMale indicates that male household heads have more family members than female ones. The negative coefficient of Household.Head.Age indicates that the number of family members decreases as the age of the household head increases. The negative coefficient for Type.of.Householdsingle Family indicates that a single household has a smaller number of family members. The negative coefficient for House.Age indicates that the number of family members decreases as the age of the house increases.
+
+```{r}
+#fit poisson regression model
+data5_glm <- glm(Total.Number.of.Family.members ~ 
+                   log(Total.Household.Income) + 
+                   log(Total.Food.Expenditure) + 
+                   Household.Head.Sex + 
+                   log(Household.Head.Age) + 
+                   Type.of.Household +
+                   log(House.Floor.Area) + 
+                   log(House.Age+0.1) + 
+                   Number.of.bedrooms + 
+                   Electricity,
+                 family=poisson,
+                  data = data5)
+
+#summary of this model
+summary(data5_glm)
+# table of coefficients summary
+summary_table <- as.data.frame(summary(data5_glm)$coefficients)
+kable(summary_table, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+```
+
+since 1040 \< 1876.182, we don’t have evidence of lack of fit
+
+```{r}
+#check overdispersion of poission regression model
+ggplot(data5_glm, 
+       aes(x=fitted(data5_glm), 
+           y=(data5$Total.Number.of.Family.members-
+                    fitted(data5_glm))^2)) +
+  geom_point(col="#f46d43") +
+  geom_abline(slope=1, intercept=0, col="#a6d96a", size=1) +
+  ylab(expression((y-hat(mu))^2)) + xlab(expression(hat(mu)))
+```
+
+```{r}
+#check overdispersion of poission regression model
+resp <- resid(data5_glm, type = "pearson")
+resd <- resid(data5_glm, type = "deviance")
+p1<- ggplot(data5_glm, aes(sample = resp)) + 
+  geom_point(stat = "qq", color = "#7fc97f") +
+ylab("Pearson residuals")
+p2<- ggplot(data5_glm, aes(sample = resd)) + geom_point(stat = "qq", color = "#7fc97f") +
+ylab("Deviance residuals")
+p3<- ggplot(data5_glm, aes(x = predict(data5_glm, type="link"), y =resd))+
+geom_point(col = "#7fc97f") +
+ylab("Deviance residuals") + xlab("Linear predictor")
+grid.arrange(p1, p2, p3, nrow = 1)
+```
+
+```{r}
+#fit negetive binomial regression
+data5_glm_nb <- glm.nb(Total.Number.of.Family.members ~ 
+                   log(Total.Household.Income) + 
+                   log(Total.Food.Expenditure) + 
+                   Household.Head.Sex + 
+                   Household.Head.Age + 
+                   Type.of.Household +
+                   log(House.Floor.Area) + 
+                   House.Age + 
+                   Number.of.bedrooms + 
+                   Electricity,
+                   data = data5)
+
+#summary of this model
+summary(data5_glm_nb)
+# table of coefficients summary
+summary_table2 <- as.data.frame(summary(data5_glm_nb)$coefficients)
+kable(summary_table2, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+```
