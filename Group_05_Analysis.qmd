@@ -31,3 +31,172 @@ data5$Household.Head.Sex <- as.factor(data5$Household.Head.Sex)
 data5$Type.of.Household <- as.factor(data5$Type.of.Household)
 data5$Electricity <- as.factor(data5$Electricity)
 ```
+
+# Data visulization
+
+```{r}
+data <- data5%>%
+  mutate(log.Total.Household.Income=log(Total.Household.Income))%>%
+  mutate(log.Total.Food.Expenditure=log(Total.Food.Expenditure))%>%
+  mutate(log.House.Floor.Area=log(House.Floor.Area))%>%
+  mutate(log.House.Age=log(House.Age+0.1))%>%
+  mutate(log.Number.of.bedrooms=log(Number.of.bedrooms+0.1))%>%
+  dplyr::select(Total.Number.of.Family.members,
+         log.Total.Household.Income,
+         log.Total.Food.Expenditure,
+         log.House.Floor.Area,
+         Household.Head.Sex,
+         Household.Head.Age,
+         Type.of.Household,
+         log.House.Age,
+         log.Number.of.bedrooms,Electricity)
+
+ggpairs(data,upper=list(continuous=wrap("points", alpha=0.4, color="#d73027")),
+lower="blank", axisLabels="none")
+```
+
+# GLM-poisson
+
+## glm1
+
+```{r}
+glm1 <- glm(Total.Number.of.Family.members ~ 
+                   log(Total.Household.Income) + 
+                   log(Total.Food.Expenditure) + 
+                   Household.Head.Sex + 
+                   Household.Head.Age + 
+                   Type.of.Household +
+                   log(House.Floor.Area) + 
+                   log(House.Age+1) + 
+                   Number.of.bedrooms + 
+                   Electricity,
+                 family=poisson,
+                  data = data5)
+summary(glm1)
+summary_table11 <- as.data.frame(summary(glm1)$coefficients)
+kable(summary_table11, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+```
+
+AIC: 6911
+
+and since 1033.7 \< 1876.182(chisq(0.95,1777)), we don’t have evidence of lack of fit. However, we have to be careful when using the approximate chi-squared distribution as a measure of goodness of fit, because this approximation relies on having reasonably large fitted values
+
+As the p-value of house floor area, number of bedrooms and electricty is higher than 0.05, we can removed these variable to make a new poisson regression model(glm2)
+
+## glm2
+
+```{r}
+glm2 <- glm(Total.Number.of.Family.members ~ 
+                   log(Total.Household.Income) + 
+                   log(Total.Food.Expenditure) + 
+                   Household.Head.Sex + 
+                   Household.Head.Age+
+                   
+                   Type.of.Household +
+                    
+                   log(House.Age+1),
+                   family=poisson,
+                   data = data5)
+summary(glm2)
+summary_table12 <- as.data.frame(summary(glm2)$coefficients)
+kable(summary_table12, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+```
+
+and since the residual deviance: 1035.1 \< 1879.265(chisq(0.95,1780)), we don’t have evidence of lack of fit. However, we have to be careful when using the approximate chi-squared distribution as a measure of goodness of fit, because this approximation relies on having reasonably large fitted values
+
+The AIC of this model is 6906.4, which is lower than the AIC of glm1
+
+## glm3
+
+```{r}
+#remove type of household
+glm3 <- glm(Total.Number.of.Family.members ~ 
+                   log(Total.Household.Income) + 
+                   log(Total.Food.Expenditure) + 
+                   Household.Head.Sex +
+                   Household.Head.Age+
+                   log(House.Age+1),
+                   family=poisson,
+                   data = data5)
+summary(glm3)
+```
+
+The AIC glm3 is 7033.9 which is higher than the other models have been fitted, so it would not be great to remove Type.of.Household variable.
+
+## check overdispersion
+
+```{r}
+#check overdispersion of glm1
+ggplot(glm1, 
+       aes(x=fitted(glm1), 
+           y=(data5$Total.Number.of.Family.members-
+                    fitted(data5_glm))^2)) +
+  geom_point(col="#f46d43") +
+  geom_abline(slope=1, intercept=0, col="#a6d96a", size=1) +
+  ylab(expression((y-hat(mu))^2)) + xlab(expression(hat(mu)))
+```
+
+# Negative Binomial
+
+## glm.nb1(all variables)
+
+```{r}
+glm_nb1 <- glm.nb(Total.Number.of.Family.members ~ 
+                   log(Total.Household.Income) + 
+                   log(Total.Food.Expenditure) + 
+                   Household.Head.Sex + 
+                   Household.Head.Age + 
+                   Type.of.Household +
+                   log(House.Floor.Area) + 
+                   log(House.Age + 1) + 
+                   Number.of.bedrooms + 
+                   Electricity,
+                  data = data5)
+summary(glm_nb1)
+
+summary_table21 <- as.data.frame(summary(glm_nb1)$coefficients)
+kable(summary_table21, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+```
+
+AIC:6913.1
+
+As the p-value of house floor area, number of bedrooms and electricty is higher than 0.05, we can removed these variable to make a new poisson regression model(glm.nb2)
+
+## glm.nb2
+
+```{r}
+#glm.nb(remove not significant variable)
+glm_nb2 <- glm.nb(Total.Number.of.Family.members ~ 
+                   log(Total.Household.Income) + 
+                   log(Total.Food.Expenditure) + 
+                   Household.Head.Sex + 
+                   Household.Head.Age+
+                   Type.of.Household +
+                   log(House.Age + 1),
+                  data = data5)
+summary(glm_nb2)
+summary_table22 <- as.data.frame(summary(glm_nb2)$coefficients)
+kable(summary_table22, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+```
+
+AIC: 6908.4
+
+## glm.nb3
+
+```{r}
+#negative binomial: remove type of household
+glm_nb3 <- glm.nb(Total.Number.of.Family.members ~ 
+                   log(Total.Household.Income) + 
+                   log(Total.Food.Expenditure) + 
+                   Household.Head.Sex +
+                   Household.Head.Age+
+                  log(House.Age + 1),
+                  data = data5)
+summary(glm_nb3)
+```
+
+AIC : 7035.9 too high
