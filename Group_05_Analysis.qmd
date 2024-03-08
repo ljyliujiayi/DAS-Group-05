@@ -4,4 +4,30 @@ format: html
 editor: visual
 ---
 
-## 
+```{r}
+library(tidyverse)
+library(moderndive)
+library(gapminder)
+library(sjPlot)
+library(stats)
+library(jtools)
+library(skimr)
+library(GGally)
+library(MASS)
+library(dplyr)
+library(knitr)
+library(gridExtra)
+library(kableExtra)
+```
+
+# Data wrangling
+
+```{r}
+#load csv files
+data5 <-  read.csv('dataset05.csv')
+
+data5$Region <- as.factor(data5$Region)
+data5$Household.Head.Sex <- as.factor(data5$Household.Head.Sex)
+data5$Type.of.Household <- as.factor(data5$Type.of.Household)
+data5$Electricity <- as.factor(data5$Electricity)
+```
