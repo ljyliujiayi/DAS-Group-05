@@ -50,7 +50,7 @@ data5$Electricity <- as.factor(data5$Electricity)
 skim(data5)
 ```
 
-## Exploratory Data Analysis
+# Exploratory Data Analysis
 
 ```{r}
 data <- data5%>%
@@ -153,153 +153,11 @@ This section mainly carries out some exploratory analysis of data and data visua
 
 First, the statistical summary of the data was performed. Then, histograms and boxplots were drawn for all continuous variables to visually judge their distribution. Variables with skewed distributions were logarithmically transformed. For categorical variables we draw bar plots to visually display their distribution. Finally, scatter plots were drawn for all predictor variables and response variables to determine their relationships.
 
+# Model Construction(all variables)
 
-## Model Construction
+By analyzing our data, we can see that the response variable is a count variable. To prevent the problem of underdispersion, we selected and compared four possible feasible models: the Poisson regression model, the generalized Poisson regression model, the negative binomial regression model, and the Quasi-Possion regression.
 
-## glm1
-
-```{r}
-glm1 <- glm(Total.Number.of.Family.members ~ 
-                   log(Total.Household.Income) + 
-                   log(Total.Food.Expenditure) + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log(House.Floor.Area) + 
-                   log(House.Age+1) + 
-                   Number.of.bedrooms + 
-                   Electricity,
-                 family=poisson,
-                  data = data5)
-summary(glm1)
-summary_table11 <- as.data.frame(summary(glm1)$coefficients)
-kable(summary_table11, "html", digits = 2)%>%
-  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
-```
-
-AIC: 6911
-
-and since 1033.7 \< 1876.182(chisq(0.95,1777)), we don’t have evidence of lack of fit. However, we have to be careful when using the approximate chi-squared distribution as a measure of goodness of fit, because this approximation relies on having reasonably large fitted values
-
-As the p-value of house floor area, number of bedrooms and electricty is higher than 0.05, we can removed these variable to make a new poisson regression model(glm2)
-
-## glm2
-
-```{r}
-glm2 <- glm(Total.Number.of.Family.members ~ 
-                   log(Total.Household.Income) + 
-                   log(Total.Food.Expenditure) + 
-                   Household.Head.Sex + 
-                   Household.Head.Age+
-                   
-                   Type.of.Household +
-                    
-                   log(House.Age+1),
-                   family=poisson,
-                   data = data5)
-summary(glm2)
-summary_table12 <- as.data.frame(summary(glm2)$coefficients)
-kable(summary_table12, "html", digits = 2)%>%
-  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
-```
-
-and since the residual deviance: 1035.1 \< 1879.265(chisq(0.95,1780)), we don’t have evidence of lack of fit. However, we have to be careful when using the approximate chi-squared distribution as a measure of goodness of fit, because this approximation relies on having reasonably large fitted values
-
-The AIC of this model is 6906.4, which is lower than the AIC of glm1
-
-## glm3
-
-```{r}
-#remove type of household
-glm3 <- glm(Total.Number.of.Family.members ~ 
-                   log(Total.Household.Income) + 
-                   log(Total.Food.Expenditure) + 
-                   Household.Head.Sex +
-                   Household.Head.Age+
-                   log(House.Age+1),
-                   family=poisson,
-                   data = data5)
-summary(glm3)
-```
-
-The AIC glm3 is 7033.9 which is higher than the other models have been fitted, so it would not be great to remove Type.of.Household variable.
-
-## check overdispersion
-
-```{r}
-#check overdispersion of glm1
-ggplot(glm1, 
-       aes(x=fitted(glm1), 
-           y=(data5$Total.Number.of.Family.members-
-                    fitted(data5_glm))^2)) +
-  geom_point(col="#f46d43") +
-  geom_abline(slope=1, intercept=0, col="#a6d96a", size=1) +
-  ylab(expression((y-hat(mu))^2)) + xlab(expression(hat(mu)))
-```
-
-# Negative Binomial
-
-## glm.nb1(all variables)
-
-```{r}
-glm_nb1 <- glm.nb(Total.Number.of.Family.members ~ 
-                   log(Total.Household.Income) + 
-                   log(Total.Food.Expenditure) + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log(House.Floor.Area) + 
-                   log(House.Age + 1) + 
-                   Number.of.bedrooms + 
-                   Electricity,
-                  data = data5)
-summary(glm_nb1)
-
-summary_table21 <- as.data.frame(summary(glm_nb1)$coefficients)
-kable(summary_table21, "html", digits = 2)%>%
-  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
-```
-
-AIC:6913.1
-
-As the p-value of house floor area, number of bedrooms and electricty is higher than 0.05, we can removed these variable to make a new poisson regression model(glm.nb2)
-
-## glm.nb2
-
-```{r}
-#glm.nb(remove not significant variable)
-glm_nb2 <- glm.nb(Total.Number.of.Family.members ~ 
-                   log(Total.Household.Income) + 
-                   log(Total.Food.Expenditure) + 
-                   Household.Head.Sex + 
-                   Household.Head.Age+
-                   Type.of.Household +
-                   log(House.Age + 1),
-                  data = data5)
-summary(glm_nb2)
-summary_table22 <- as.data.frame(summary(glm_nb2)$coefficients)
-kable(summary_table22, "html", digits = 2)%>%
-  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
-```
-
-AIC: 6908.4
-
-## glm.nb3
-
-```{r}
-#negative binomial: remove type of household
-glm_nb3 <- glm.nb(Total.Number.of.Family.members ~ 
-                   log(Total.Household.Income) + 
-                   log(Total.Food.Expenditure) + 
-                   Household.Head.Sex +
-                   Household.Head.Age+
-                  log(House.Age + 1),
-                  data = data5)
-summary(glm_nb3)
-```
-
-AIC : 7035.9 too high
-
+## Poisson regression model
 
 ```{r}
 library(car)
@@ -316,8 +174,13 @@ model_pois <- glm(Total.Number.of.Family.members ~
                    Electricity,
                    family=poisson(link="log"),
                    data = data5_log)
+
 # Summarize the model
 summary(model_pois)
+summary_table11 <- as.data.frame(summary(model_pois)$coefficients)
+kable(summary_table11, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+
 # Calculate and plot fitted values vs residuals for diagnostic checking
 fitted_values <- fitted(model_pois)
 residuals_values <- residuals(model_pois)
@@ -326,9 +189,14 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
   labs(x="Fitted Values",y="Residuals")
+
 # Calculate VIF to check for multicollinearity
 vif(model_pois)
+```
 
+## Generalized Poisson regression model
+
+```{r}
 # Fit the generalized Poisson regression model
 model_gp <- glm2(Total.Number.of.Family.members ~ 
                    log_Total.Household.Income + 
@@ -342,8 +210,13 @@ model_gp <- glm2(Total.Number.of.Family.members ~
                    Electricity,
                    family=poisson(link="log"),
                    data = data5_log)
+
 # Summarize the model
 summary(model_gp)
+summary_table11 <- as.data.frame(summary(model_gp)$coefficients)
+kable(summary_table11, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+
 # Calculate and plot fitted values vs residuals for diagnostic checking
 fitted_values <- fitted(model_gp)
 residuals_values <- residuals(model_gp)
@@ -352,9 +225,16 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
   labs(x="Fitted Values",y="Residuals")
+
 # Calculate VIF to check for multicollinearity
 vif(model_gp)
+```
 
+The fitting results of the Poisson regression model and the generalized Poisson regression model are identical. The AIC value of them is 6911, relatively low, which indicates that the model explains the observed data well. Meanwhile, the null deviance is 1854.6, and the residual deviance is 1033.7. The smaller residual deviance suggests that the model has a good fit relative to the null model.
+
+## Negative binomial regression model
+
+```{r}
 # Fit the negative binomial regression model
 model_nb <- glm.nb(Total.Number.of.Family.members ~ 
                    log_Total.Household.Income + 
@@ -367,8 +247,13 @@ model_nb <- glm.nb(Total.Number.of.Family.members ~
                    Number.of.bedrooms + 
                    Electricity,
                    data = data5_log)
+
 # Summarize the model
 summary(model_nb)
+summary_table11 <- as.data.frame(summary(model_nb)$coefficients)
+kable(summary_table11, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+
 # Calculate and plot fitted values vs residuals for diagnostic checking
 fitted_values <- fitted(model_nb)
 residuals_values <- residuals(model_nb)
@@ -377,9 +262,16 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
   labs(x="Fitted Values",y="Residuals")
+
 # Calculate VIF to check for multicollinearity
 vif(model_nb)
+```
 
+The AIC value of the negative binomial regression model is 6913.1, higher than the 6911 for the previous models. This suggests that the negative binomial regression model may not provide a better fit compared to the previous models, indicating potentially weaker explanatory power. Additionally, despite its higher AIC value, there is a slight decrease in residual deviance (1033.6) for the negative binomial regression model.
+
+## Quasi-Poisson regression model
+
+```{r}
 # Fit the Quasi-Poisson regression model
 model_qp <- glm(Total.Number.of.Family.members ~ 
                    log_Total.Household.Income + 
@@ -408,18 +300,32 @@ vif(model_qp)
 
 # Perform an analysis of variance (ANOVA) to compare the different models fitted
 anova(model_pois, model_gp, model_nb, model_qp, test = "Chisq")
-
 ```
 
-By analyzing our data, the response variable is a count variable, and its variance is less than the mean, which means that there is no overfitting, but there may be an underdispersion problem. In this case, we selected four possible feasible Models are built and compared: the Poisson regression model, the generalized Poisson regression model, the negative binomial regression model, and the Quasi-Possion regression.
+From the summary of the Quasi-Possion regression, we can see that residual deviance is 1033.7, similar to the Poisson regression model.
 
-After we have built the four models, evaluate them individually and choose the most appropriate one. First review its model summary, including estimates of model coefficients, standard errors, z-statistics, and p-values. Then perform residual analysis and draw residual scatter plots respectively, and compare which model has the smallest AIC value, and then check multicollinearity issues through VIF, and finally use ANOVA to compare the four models.
+Additionally, by analyzing the VIF values for models, the GVIF values for log_Total.Household.Income and log_Total.Food.Expenditure are 5.51 and 4.66, respectively, suggesting some degree of multicollinearity between these variables. The GVIF values for other variables range from 1.09 to 1.70, indicating relatively low correlations among them, which are unlikely to lead to multicollinearity problems. In summary, while some multicollinearity exists in the model, it does not appear to be severe enough to significantly impact the stability or interpretation of the model.
 
-Finally, based on various evaluation results, the Poisson regression model was selected. As can be seen from the Poisson regression model summary, Total.Household.Income, Total.Food.Expenditure, Household.Head.Sex, Household.Head.Age, Type.of.Household, House.Age, these six household related variables significantly influence the number of people living in a household.Their coefficients represent the change in the log mean of the response variable when the predictor variable increases by one unit.
+```{r}
+model_compare_allvariables <- data.frame(
+  Model = character(), 
+  AIC = numeric(),
+  Deviance = numeric(),
+  stringsAsFactors = FALSE)
 
-The coefficients of log_Total.Household.Income and log_Total.Food.Expenditure are negative, meaning that an increase in total household income and food expenditure is associated with a decrease in the number of household members. The positive coefficient of Household.Head.SexMale indicates that male household heads have more family members than female ones. The negative coefficient of Household.Head.Age indicates that the number of family members decreases as the age of the household head increases. The negative coefficient for Type.of.Householdsingle Family indicates that a single household has a smaller number of family members. The negative coefficient for House.Age indicates that the number of family members decreases as the age of the house increases.
+model_compare_allvariables <- rbind(model_compare_allvariables, 
+                          c("Poisson", AIC(model_pois), deviance(model_pois)),
+                          c("Generalized Poisson", AIC(model_gp), deviance(model_gp)),
+                          c("Negative Binomial", AIC(model_nb), deviance(model_nb)),
+                          c("Quasi-Poisson", AIC(model_qp), deviance(model_qp)))
 
-## Model Selection
+names(model_compare_allvariables) <- c("Model", "AIC","deviance")
+print(model_compare_allvariables)
+```
+
+By establishing a table to compare the AIC values and Residual deviance of the previous models, it can be observed that the Poisson regression model with the full set of variables has the smallest AIC value and relatively lower Residual deviance.
+
+# Model Selection
 
 In order to prevent overfitting, we split the data set into a training set and a test set.
 
@@ -537,50 +443,126 @@ vif(model_qp)
 anova(model_pois, model_gp, model_nb, model_qp, test = "Chisq")
 ```
 
-In the comparison of the above four models, the Poisson regression model has the smallest AIC(5514.8), so we tend to choose it as the most appropriate model.
+In the comparison of the above four models with the full set of variables, the Poisson regression model has the smallest AIC(5514.8).
 
-Next, insignificant variables in the model are gradually removed.
+Meanwhile, four of the explanatory variables in the Poisson regression model do not appear to be statistically significant, as their p-values are greater than 0.05.
+
+Therefore, we first remove three of the non-significant explanatory variables: House.Floor.Area, Number.of.bedrooms and Electricity.
 
 ```{r}
 # For the Poisson regression model
-pois <- glm(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex +
-                   log_House.Age,
-                   family=poisson(link="log"),
-                   data = train_set)
-summary(pois)
-```
-
-```{r}
-# For the generalized Poisson regression model
-gp <- glm2(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex +
-                   log_House.Age,
-                   family=poisson(link="log"),
-                   data = train_set)
-summary(gp)
-```
-
-For the Poisson regression model and the generalized Poisson regression model, according to the backward elimination method, insignificant variables are gradually eliminated to obtain the final model that is all significant, but the AIC is larger than the AIC that initially included all variables, which is 5614.3\>5514.8.
-
-```{r}
-# For the negative binomial regression model
-nb <- glm.nb(Total.Number.of.Family.members ~ 
+pois_modified_1 <- glm(Total.Number.of.Family.members ~ 
                    log_Total.Household.Income + 
                    log_Total.Food.Expenditure + 
                    Household.Head.Sex + 
+                   Household.Head.Age +
+                   Type.of.Household +
                    log_House.Age,
+                   family = poisson(link="log"),
                    data = train_set)
-summary(nb)
+
+summary(pois_modified_1)
+summary_table12 <- as.data.frame(summary(pois_modified_1)$coefficients)
+kable(summary_table12, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
 ```
 
-For the negative binomial regression model, according to the backward elimination method, insignificant variables are gradually eliminated to obtain the final model that is all significant, but the AIC is larger than the AIC that initially included all variables, which is 5616.3\>5516.9.
+The AIC of this model is 5510.1, lower than the previous Poisson regression model with all variables. This indicates that this model explains the observed data better than before.
 
-## Model prediction performance
+Additionally, the negative binomial regression model is also built below.
+
+```{r}
+# For the negative binomial regression model
+nb_modified_1 <- glm.nb(Total.Number.of.Family.members ~ 
+                   log_Total.Household.Income + 
+                   log_Total.Food.Expenditure + 
+                   Household.Head.Sex + 
+                   Household.Head.Age +
+                   Type.of.Household +
+                   log_House.Age,
+                   data = train_set)
+summary(nb_modified_1)
+summary_table22 <- as.data.frame(summary(nb_modified_1)$coefficients)
+kable(summary_table22, "html", digits = 2)%>%
+  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
+```
+
+Then, we also attempted to remove the explanatory variable, type of household, for one of the categories of this variable is not significant compared with the reference level.
+
+```{r}
+# remove type of household
+# For the Poisson regression model
+pois_modified_2 <- glm(Total.Number.of.Family.members ~ 
+                   log_Total.Household.Income + 
+                   log_Total.Food.Expenditure + 
+                   Household.Head.Sex + 
+                   Household.Head.Age +
+                   log_House.Age,
+                   family = poisson(link="log"),
+                   data = train_set)
+summary(pois_modified_2)
+```
+
+The AIC value of this model is 5615.6, evidently higher than before. Therefore, it's no appropriate to remove it.
+
+As for the type of household, two or more nonrelated persons/members shows no significant difference compared to the reference level (Extended family), so is_single_family is used to replaced the Type of household to make the model more concise and precise.
+
+```{r}
+train_set$is_single_family <- ifelse(train_set$Type.of.Household == "Single Family", 1, 0)
+# For the Poisson regression model
+pois_modified_3 <- glm(Total.Number.of.Family.members ~ 
+                         log_Total.Household.Income + 
+                         log_Total.Food.Expenditure + 
+                         Household.Head.Sex + 
+                         Household.Head.Age + 
+                         is_single_family + 
+                         log_House.Age, 
+                       family=poisson(link="log"), 
+                       data = train_set)
+summary(pois_modified_3)
+```
+
+From the summary of this model, the AIC is 5508.2, which is the smallest among all the models built. This suggests that the model explains the observed data well while maintaining higher predictive ability and model simplicity. Meanwhile, the residual deviance of this model is 814.37, slightly higher than the residual deviance of the first modified model (pois_modified_1) above. However, considering the degrees of freedom of this model is also higher than the previous model, the slight increase of the residual deviance is reasonable and acceptable.
+
+Additionally, we also build the negative binomial regression model below. But it seems not fit well.
+
+Therefore, taking into account the model's accuracy, interpretability, and simplicity, we regard this model as the best fit.
+
+```{r}
+# For the negative binomial regression model
+nb_modified_3 <- glm.nb(Total.Number.of.Family.members ~ 
+                          log_Total.Household.Income + 
+                          log_Total.Food.Expenditure + 
+                          Household.Head.Sex + 
+                          Household.Head.Age + 
+                          is_single_family + 
+                          log_House.Age, 
+                        data = train_set)
+summary(nb_modified_3)
+```
+
+The table of AIC and Residual deviances is presented below.
+
+```{r}
+model_comparison <- data.frame(
+  Model = character(), 
+  AIC = numeric(),
+  Deviance = numeric(),
+  stringsAsFactors = FALSE)
+
+model_comparison <- rbind(model_comparison, 
+                          c("Poisson", AIC(model_pois), deviance(model_pois)),
+                          c("Negative Binomial", AIC(model_nb), deviance(model_nb)),
+                          c("Poisson_modified_1", AIC(pois_modified_1), deviance(pois_modified_1)),
+                          c("Negative Binomial_modified_1", AIC(nb_modified_1), deviance(nb_modified_1)),
+                          c("Poisson_modified_3", AIC(pois_modified_3), deviance(pois_modified_3)),
+                          c("Negative Binomial_modified_3", AIC(nb_modified_3), deviance(nb_modified_3)))
+
+names(model_comparison) <- c("Model", "AIC","deviance")
+print(model_comparison)
+```
+
+# Model prediction performance
 
 ```{r}
 # For the Poisson regression model contains all variables
@@ -590,10 +572,15 @@ rmse <- sqrt(mean((predictions - actuals)^2))
 print(rmse)
 
 # For the Poisson regression model after stepwise removal
-predictions <- predict(pois,newdata = test_set, type = "response")
+test_set$is_single_family <- ifelse(train_set$Type.of.Household == "Single Family", 1, 0)
+predictions <- predict(pois_modified_3, newdata = test_set, type = "response")
 actuals <- test_set$Total.Number.of.Family.members
 rmse <- sqrt(mean((predictions - actuals)^2))
 print(rmse)
 ```
 
-According to the Root Mean Square Error value(RMSE), it can be seen that the difference between the predicted value and the actual value of the model is small, and the prediction performance of the model is better. It can be seen that the RMSE of the model containing all variables is smaller than that of the model after stepwise removal, 1.675\<1.780, and its AIC is also smaller, 5514.8\<5614.3, so we believe that the Poisson regression model containing all variables is the most appropriate model.
+According to the Root Mean Square Error value(RMSE), it can be seen that the difference between the predicted value and the actual value of the model is small, and the prediction performance of the model is better. However, It can be seen that the RMSE of the model containing all variables is smaller than that of the model after stepwise removal, 1.675\<1.780. Therefore, there may be a slight overfitting issue for the model after stepwise removal.
+
+# Conclusion
+
+In summary, among the household related variables, we think total household income, total food expenditure, household head sex, household head age, type of household (whether it is single family or not) and house age, these six variables will influence the number of people living in a household significantly.
