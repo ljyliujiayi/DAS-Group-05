@@ -50,6 +50,8 @@ data5$Electricity <- as.factor(data5$Electricity)
 skim(data5)
 ```
 
+The Philippine government conducts a survey every three years to obtain data on household income and expenditure. Our goal is to explore what family-related variables influence the number of people living in a household, utilizing five data sets from different parts of the Philippines.
+
 ## Exploratory Data Analysis
 
 ```{r}
@@ -70,8 +72,12 @@ data <- data5%>%
          log.Number.of.bedrooms,Electricity)
 
 ggpairs(data,upper=list(continuous=wrap("points", alpha=0.4, color="#d73027")),
-lower="blank", axisLabels="none")
+lower="blank", axisLabels="none")+
+  ggtitle('The relationship between variables')+
+  theme(plot.title = element_text(hjust = 0.5))
 ```
+
+We log numeric variables primarily because its distribution is skewed, which could potentially impact the accuracy of our statistical analysis. Logarithmic transformation of variables can reduce the degree of skew. At the same time, the value range of some variables is larger, while the value range of other variables is smaller, and logarithmic transformation can reduce the difference between variables. Since some variables have a value of 0, adding a constant (e.g. 0.1) to the value of the variable makes the logarithmic transformation work smoothly.
 
 ```{r}
 # Display the summary statistics of the data5
@@ -103,7 +109,7 @@ p23 <- ggplot(data5,aes(x = Type.of.Household)) +
         geom_bar(aes(fill = Type.of.Household))
 p24 <- ggplot(data5,aes(x = Electricity)) +
         geom_bar(aes(fill = Electricity))
-grid.arrange(p21, p22, p23, p24, ncol=2)
+grid.arrange(p21, p22, p23, p24, ncol=2,widths=c(15,10))
 
 # Create boxplots for continuous variables
 p31<-ggplot(data=data5,mapping=aes(y=Total.Household.Income))+
@@ -152,7 +158,6 @@ grid.arrange(p41, p42, p43, p44, p45, p46, ncol=3)
 This section mainly carries out some exploratory analysis of data and data visualization.
 
 First, the statistical summary of the data was performed. Then, histograms and boxplots were drawn for all continuous variables to visually judge their distribution. Variables with skewed distributions were logarithmically transformed. For categorical variables we draw bar plots to visually display their distribution. Finally, scatter plots were drawn for all predictor variables and response variables to determine their relationships.
-
 
 ## Model Construction
 
@@ -300,7 +305,6 @@ summary(glm_nb3)
 
 AIC : 7035.9 too high
 
-
 ```{r}
 library(car)
 # Fit the Poisson regression model with the log link function
@@ -325,7 +329,9 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",title = 'Poisson regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Calculate VIF to check for multicollinearity
 vif(model_pois)
 
@@ -351,7 +357,10 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",title = 'Generalized Poisson regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 # Calculate VIF to check for multicollinearity
 vif(model_gp)
 
@@ -376,7 +385,10 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",title = 'Negative Binomial regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 # Calculate VIF to check for multicollinearity
 vif(model_nb)
 
@@ -402,7 +414,10 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",title = 'Quasi-Possion regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
 # Calculate VIF to check for multicollinearity
 vif(model_qp)
 
@@ -453,7 +468,9 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",title = 'Train set Poisson regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Calculate VIF to check for multicollinearity
 vif(model_pois)
 
@@ -479,7 +496,9 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",title = 'Train set Generalized Poisson regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Calculate VIF to check for multicollinearity
 vif(model_gp)
 
@@ -504,7 +523,8 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",title = 'Train set Negative Binomial regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
 # Calculate VIF to check for multicollinearity
 vif(model_nb)
 
@@ -529,7 +549,9 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",title = 'Train set Quasi-Possion regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Calculate VIF to check for multicollinearity
 vif(model_qp)
 
