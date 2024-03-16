@@ -46,6 +46,6 @@ This project analyses which household related variables influence the number of 
 ## Instructions
 1. Open 'Group_05_Analysis.qmd' in Rstudio.
 2. Run code to conduct analysis.
-3. Get summary of the results from 'Group_05_Analysis.pdf'
+3. View analysis report via 'Group_05_Analysis.pdf'.
 
 ## Contact information
