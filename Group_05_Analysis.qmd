@@ -12,6 +12,7 @@ execute:
   eval: true
   warning: false
   message: false
+prefer-html: true
 ---
 
 ```{r}
@@ -30,6 +31,9 @@ library(gridExtra)
 library(kableExtra)
 library(ggplot2)
 library(glm2)
+library(gridExtra)
+library(grid)
+library(knitr)
 ```
 
 # Data wrangling
@@ -38,120 +42,193 @@ library(glm2)
 # Load the CSV file
 data5 <-  read.csv('dataset05.csv')
 
+#Simplify variable name
+colnames(data5)<-c('Income','Region','Expenditure','Sex',
+                   'Household.age','Type','Members','Area','House.age',
+                   'Bedrooms','Electricity')
+
 # Display the structure of the dataframe
 str(data5)
+
 # Convert specified columns to categorical factors
 data5$Region <- as.factor(data5$Region)
-data5$Household.Head.Sex <- as.factor(data5$Household.Head.Sex)
-data5$Type.of.Household <- as.factor(data5$Type.of.Household)
+data5$Household.Head.Sex <- as.factor(data5$Sex)
+data5$Type.of.Household <- as.factor(data5$Type)
 data5$Electricity <- as.factor(data5$Electricity)
+
 
 # Provide a concise summary of the dataframe
 skim(data5)
+
 ```
+
+The Philippine government conducts a survey every three years to obtain data on household income and expenditure. Our goal is to explore what family-related variables influence the number of people living in a household, utilizing five data sets from different parts of the Philippines.
+
+Description:
+
+-   Income: Total.Household.Income
+
+-   Expenditure: Total.Food.Expenditure
+
+-   Sex: Household.Head.Sex
+
+-   Household.age: Household.Head.Age
+
+-   Type: Type.of.Household
+
+-   Members: Type.of.Household
+
+-   Area: House.Floor.Area
+
+-   House.age: House.Floor.Area
+
+-   Bedrooms: House.Floor.Area
 
 # Exploratory Data Analysis
 
-```{r}
-data <- data5%>%
-  mutate(log.Total.Household.Income=log(Total.Household.Income))%>%
-  mutate(log.Total.Food.Expenditure=log(Total.Food.Expenditure))%>%
-  mutate(log.House.Floor.Area=log(House.Floor.Area))%>%
-  mutate(log.House.Age=log(House.Age+0.1))%>%
-  mutate(log.Number.of.bedrooms=log(Number.of.bedrooms+0.1))%>%
-  dplyr::select(Total.Number.of.Family.members,
-         log.Total.Household.Income,
-         log.Total.Food.Expenditure,
-         log.House.Floor.Area,
-         Household.Head.Sex,
-         Household.Head.Age,
-         Type.of.Household,
-         log.House.Age,
-         log.Number.of.bedrooms,Electricity)
+This section mainly carries out some exploratory analysis of data and data visualization.
 
-ggpairs(data,upper=list(continuous=wrap("points", alpha=0.4, color="#d73027")),
-lower="blank", axisLabels="none")
-```
-
+First, the statistical summary of the data is performed. It can be seen that data distribution of each variable from the results, such as minimum value, maximum value, quartile, etc.
 ```{r}
 # Display the summary statistics of the data5
 summary(data5)
+```
 
+Then histograms are drawn for the continuous variables to visually identify their distribution. It can be seen from @fig-histograms that Income, Expenditure, Area, House.age have relatively serious skewed distributions.
+```{r}
+#| label: fig-histograms
+#| fig-cap: Histogram plots for continuous variables
+#| fig-align: center
+#| message: false
 # Create histogram plots for continuous variables
-p11 <- ggplot(data5,aes(x = Total.Household.Income)) +
+p11 <- ggplot(data5,aes(x = Income)) +
         geom_histogram(bins = 30, color="white",fill="steelblue")
-p12 <- ggplot(data5,aes(x = Total.Food.Expenditure)) +
+p12 <- ggplot(data5,aes(x = Expenditure)) +
         geom_histogram(bins = 30, color="white",fill="steelblue")
-p13 <- ggplot(data5,aes(x = Household.Head.Age)) +
+p13 <- ggplot(data5,aes(x = Household.age)) +
         geom_histogram(bins = 30, color="white",fill="steelblue")
-p14 <- ggplot(data5,aes(x = Total.Number.of.Family.members)) +
+p14 <- ggplot(data5,aes(x = Members)) +
         geom_histogram(bins = 30, color="white",fill="steelblue")
-p15 <- ggplot(data5,aes(x = House.Floor.Area)) +
+p15 <- ggplot(data5,aes(x = Area)) +
         geom_histogram(bins = 30, color="white",fill="steelblue")
-p16 <- ggplot(data5,aes(x = House.Age)) +
+p16 <- ggplot(data5,aes(x = House.age)) +
         geom_histogram(bins = 30, color="white",fill="steelblue")
-p17 <- ggplot(data5,aes(x = Number.of.bedrooms)) +
+p17 <- ggplot(data5,aes(x = Bedrooms)) +
         geom_histogram(bins = 30, color="white",fill="steelblue")
-grid.arrange(p11, p12, p13, p14, p15, p16, p17, ncol=3)
+grid.arrange(p11, p12, p13, p14, p15, p16, p17, ncol=3,
+             top=textGrob('Histogram plots for continuous variables'))
+```
 
+Then the bar charts are drawn for the categorical variables to visually display the number of each category. It can be seen from @fig-barplots, male householders are three times more likely than female householders. In addition, those with electricity and single families account for the majority.
+```{r}
+#| label: fig-barplots
+#| fig-cap: Bar plots for categorical variables
+#| fig-align: center
+#| message: false
 # Create bar plots for categorical variables
-p21 <- ggplot(data5,aes(x = Region)) +
-        geom_bar(aes(fill = Region))
-p22 <- ggplot(data5,aes(x = Household.Head.Sex)) +
-        geom_bar(aes(fill = Household.Head.Sex))
-p23 <- ggplot(data5,aes(x = Type.of.Household)) +
-        geom_bar(aes(fill = Type.of.Household))
-p24 <- ggplot(data5,aes(x = Electricity)) +
+p21 <- ggplot(data5,aes(x = Sex)) +
+        geom_bar(aes(fill = Sex))
+p22 <- ggplot(data5,aes(x = Type)) +
+        geom_bar(aes(fill = Type))+
+  scale_x_discrete(labels=function(x)str_wrap(x,width= 2))
+p23 <- ggplot(data5,aes(x = Electricity)) +
         geom_bar(aes(fill = Electricity))
-grid.arrange(p21, p22, p23, p24, ncol=2)
+grid.arrange(arrangeGrob(p21, p23,ncol=2) , p22, nrow=2,
+             heights=c(5,8),
+             top=textGrob('Bar plots for categorical variables'))
+```
 
+Furthermore, boxplots are drawn for the continuous variables, and it can also be seen from @fig-boxplots that Income, Expenditure, Area, House.age have relatively serious skewed distributions, And their outliers are almost all on the same side.
+```{r}
+#| label: fig-boxplots
+#| fig-cap: Boxplots for continuous variables
+#| fig-align: center
+#| message: false
 # Create boxplots for continuous variables
-p31<-ggplot(data=data5,mapping=aes(y=Total.Household.Income))+
-  geom_boxplot(fill="steelblue")
-p32<-ggplot(data=data5,mapping=aes(y=Total.Food.Expenditure))+
-  geom_boxplot(fill="steelblue")
-p33<-ggplot(data=data5,mapping=aes(y=Household.Head.Age))+
-  geom_boxplot(fill="steelblue")
-p34<-ggplot(data=data5,mapping=aes(y=Total.Number.of.Family.members))+
-  geom_boxplot(fill="steelblue")
-p35<-ggplot(data=data5,mapping=aes(y=House.Floor.Area))+
-  geom_boxplot(fill="steelblue")
-p36<-ggplot(data=data5,mapping=aes(y=House.Age))+
-  geom_boxplot(fill="steelblue")
-p37<-ggplot(data=data5,mapping=aes(y=Number.of.bedrooms))+
-  geom_boxplot(fill="steelblue")
-grid.arrange(p31, p32, p33, p34, p35, p36, p37, ncol=3)
+p31<-ggplot(data=data5,mapping=aes(y=Income))+
+  geom_boxplot(fill="steelblue")+
+  labs(y='Income')
+p32<-ggplot(data=data5,mapping=aes(y=Expenditure))+
+  geom_boxplot(fill="steelblue")+
+  labs(y='Expenditure')
+p33<-ggplot(data=data5,mapping=aes(y=Household.age))+
+  geom_boxplot(fill="steelblue")+
+  labs(y='Household age')
+p34<-ggplot(data=data5,mapping=aes(y=Members))+
+  geom_boxplot(fill="steelblue")+
+  labs(y='Members')
+p35<-ggplot(data=data5,mapping=aes(y=Area))+
+  geom_boxplot(fill="steelblue")+
+  labs(y='Area')
+p36<-ggplot(data=data5,mapping=aes(y=House.age))+
+  geom_boxplot(fill="steelblue")+
+  labs(y='House age')
+p37<-ggplot(data=data5,mapping=aes(y=Bedrooms))+
+  geom_boxplot(fill="steelblue")+
+  labs(y='Bedrooms')
+grid.arrange(p31, p32, p33, p34, p35, p36, p37, ncol=3,
+             heights=c(8,8,8),
+             top=textGrob('Boxplots for continuous variables'))
+```
 
+Finally, logarithm transformation is performed on these four skewed distributed variables, the new dataset is formed. Then, scatter plots are drawn for the predictor variables and response variables to determine their relationships. As can be seen from the @fig-scatterplots, Expenditure and Members show a relatively obvious correlation, Income, Household.age and Members have a weak correlation, and the remaining variables cannot see the obvious correlation.
+```{r}
+#| label: fig-scatterplots
+#| fig-cap: Scatterplots for each predictor variable and response variable
+#| fig-align: center
+#| message: false
 # Perform log transformation on selected variables
 data5_log<-data5 %>%
   mutate(
-    log_Total.Household.Income=log(Total.Household.Income),
-    log_Total.Food.Expenditure=log(Total.Food.Expenditure),
-    log_House.Floor.Area=log(House.Floor.Area),
-    log_House.Age=log1p(House.Age)
+    log_Income=log(Income),
+    log_Expenditure=log(Expenditure),
+    log_Area=log(Area),
+    log_House.age=log1p(House.age)
   )
-
 data5_log<-data5_log[,c(-1,-3,-8,-9)]
 
 # Create scatterplots for each predictor variable and response variable
-p41<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=log_Total.Household.Income))+
-  geom_point()
-p42<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=log_Total.Food.Expenditure))+
-  geom_point()
-p43<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=Household.Head.Age))+
-  geom_point()
-p44<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=log_House.Floor.Area))+
-  geom_point()
-p45<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=log_House.Age))+
-  geom_point()
-p46<-ggplot(data=data5_log,aes(y=Total.Number.of.Family.members, x=Number.of.bedrooms))+
-  geom_point()
-grid.arrange(p41, p42, p43, p44, p45, p46, ncol=3)
+p41<-ggplot(data=data5_log,aes(y=Members, 
+                               x=log_Income))+
+  geom_point()+
+  labs(x='Log.Income',y='Members')
+p42<-ggplot(data=data5_log,aes(y=Members, 
+                               x=log_Expenditure))+
+  geom_point()+
+  labs(x='Log.Expenditure',y='Members')
+p43<-ggplot(data=data5_log,aes(y=Members, 
+                               x=Household.age))+
+  geom_point()+
+  labs(x='Household age',y='Members')
+p44<-ggplot(data=data5_log,aes(y=Members, 
+                               x=log_Area))+
+  geom_point()+
+  labs(x='Log.Area',y='Members')
+p45<-ggplot(data=data5_log,aes(y=Members, 
+                               x=log_House.age))+
+  geom_point()+
+  labs(x='Log.House age',y='Members')
+p46<-ggplot(data=data5_log,aes(y=Members, 
+                               x=Bedrooms))+
+  geom_point()+
+  labs(x='Number of bedrooms',y='Members')
+grid.arrange(p41, p42, p43, p44, p45, p46, ncol=3,
+             top=textGrob('Scatterplots for each predictor variable and response variable
+                                                               '))
 ```
 
-This section mainly carries out some exploratory analysis of data and data visualization.
+Additionally, draw a relationship diagram as shown in @fig-ggpairs.
+```{r}
+#| label: fig-ggpairs
+#| fig-cap: The relationship between variables
+#| fig-align: center
+#| message: false
+ggpairs(data5_log,upper=list(continuous=wrap("points", alpha=0.4, color="#d73027")),
+lower="blank", axisLabels="none")+
+  ggtitle('The relationship between variables')+
+  theme(plot.title = element_text(hjust = 0.5))
+```
 
-First, the statistical summary of the data was performed. Then, histograms and boxplots were drawn for all continuous variables to visually judge their distribution. Variables with skewed distributions were logarithmically transformed. For categorical variables we draw bar plots to visually display their distribution. Finally, scatter plots were drawn for all predictor variables and response variables to determine their relationships.
 
 # Model Construction(all variables)
 
@@ -162,15 +239,15 @@ By analyzing our data, we can see that the response variable is a count variable
 ```{r}
 library(car)
 # Fit the Poisson regression model with the log link function
-model_pois <- glm(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log_House.Floor.Area + 
-                   log_House.Age + 
-                   Number.of.bedrooms + 
+model_pois <- glm(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age + 
+                   Type +
+                   log_Area + 
+                   log_House.age + 
+                   Bedrooms + 
                    Electricity,
                    family=poisson(link="log"),
                    data = data5_log)
@@ -188,7 +265,9 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",
+       title = 'Poisson regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Calculate VIF to check for multicollinearity
 vif(model_pois)
@@ -198,15 +277,15 @@ vif(model_pois)
 
 ```{r}
 # Fit the generalized Poisson regression model
-model_gp <- glm2(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log_House.Floor.Area + 
-                   log_House.Age + 
-                   Number.of.bedrooms + 
+model_gp <- glm2(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age + 
+                   Type +
+                   log_Area + 
+                   log_House.age + 
+                   Bedrooms + 
                    Electricity,
                    family=poisson(link="log"),
                    data = data5_log)
@@ -224,7 +303,9 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",
+       title = 'Generalized Poisson regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
 
 # Calculate VIF to check for multicollinearity
 vif(model_gp)
@@ -236,15 +317,15 @@ The fitting results of the Poisson regression model and the generalized Poisson 
 
 ```{r}
 # Fit the negative binomial regression model
-model_nb <- glm.nb(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log_House.Floor.Area + 
-                   log_House.Age + 
-                   Number.of.bedrooms + 
+  model_nb <- glm.nb(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age + 
+                   Type +
+                   log_Area + 
+                   log_House.age + 
+                   Bedrooms + 
                    Electricity,
                    data = data5_log)
 
@@ -261,7 +342,10 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",
+       title = 'Negative Binomial regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
 
 # Calculate VIF to check for multicollinearity
 vif(model_nb)
@@ -273,15 +357,15 @@ The AIC value of the negative binomial regression model is 6913.1, higher than t
 
 ```{r}
 # Fit the Quasi-Poisson regression model
-model_qp <- glm(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
+model_qp <- glm(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age + 
                    Type.of.Household +
-                   log_House.Floor.Area + 
-                   log_House.Age + 
-                   Number.of.bedrooms + 
+                   log_Area + 
+                   log_House.age + 
+                   Bedrooms + 
                    Electricity,
                    family=quasipoisson(link="log"),
                    data = data5_log)
@@ -294,7 +378,10 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",
+       title = 'Quasi-Possion regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Calculate VIF to check for multicollinearity
 vif(model_qp)
 
@@ -338,15 +425,15 @@ test_set <- data5_log[train_index, ]
 
 ```{r}
 # Fit the Poisson regression model with the log link function
-model_pois <- glm(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log_House.Floor.Area + 
-                   log_House.Age + 
-                   Number.of.bedrooms + 
+model_pois <- glm(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age + 
+                   Type +
+                   log_Area + 
+                   log_House.age + 
+                   Bedrooms + 
                    Electricity,
                    family=poisson(link="log"),
                    data = train_set)
@@ -359,20 +446,22 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",
+       title = 'Train set Poisson regression model Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
 # Calculate VIF to check for multicollinearity
 vif(model_pois)
 
 # Fit the generalized Poisson regression model
-model_gp <- glm2(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log_House.Floor.Area + 
-                   log_House.Age + 
-                   Number.of.bedrooms + 
+model_gp <- glm2(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age + 
+                   Type +
+                   log_Area + 
+                   log_House.age + 
+                   Bedrooms + 
                    Electricity,
                    family=poisson(link="log"),
                    data = train_set)
@@ -385,20 +474,24 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",
+  title = 'Train set Generalized Poisson regression model 
+       Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Calculate VIF to check for multicollinearity
 vif(model_gp)
 
 # Fit the negative binomial regression model
-model_nb <- glm.nb(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log_House.Floor.Area + 
-                   log_House.Age + 
-                   Number.of.bedrooms + 
+model_nb <- glm.nb(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age + 
+                   Type +
+                   log_Area + 
+                   log_House.age + 
+                   Bedrooms + 
                    Electricity,
                    data = train_set)
 # Summarize the model
@@ -410,20 +503,25 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",
+       title = 
+         'Train set Negative Binomial regression model 
+       Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Calculate VIF to check for multicollinearity
 vif(model_nb)
 
 # Fit the Quasi-Poisson regression model
-model_qp <- glm(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age + 
-                   Type.of.Household +
-                   log_House.Floor.Area + 
-                   log_House.Age + 
-                   Number.of.bedrooms + 
+model_qp <- glm(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age + 
+                   Type +
+                   log_Area + 
+                   log_House.age + 
+                   Bedrooms + 
                    Electricity,
                    family=quasipoisson(link="log"),
                    data = train_set)
@@ -435,7 +533,10 @@ ggplot(data.frame(Fitted=fitted_values, Residuals=residuals_values),
        aes(x=Fitted, y=Residuals))+
   geom_point()+
   geom_hline(yintercept = 0,linetype = "dashed",color="red")+
-  labs(x="Fitted Values",y="Residuals")
+  labs(x="Fitted Values",y="Residuals",
+       title = 'Train set Quasi-Possion regression model 
+       Residuals-Fitted Plot')+
+  theme(plot.title = element_text(hjust = 0.5))
 # Calculate VIF to check for multicollinearity
 vif(model_qp)
 
@@ -451,13 +552,13 @@ Therefore, we first remove three of the non-significant explanatory variables: H
 
 ```{r}
 # For the Poisson regression model
-pois_modified_1 <- glm(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age +
-                   Type.of.Household +
-                   log_House.Age,
+pois_modified_1 <- glm(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age +
+                   Type +
+                   log_House.age,
                    family = poisson(link="log"),
                    data = train_set)
 
@@ -469,35 +570,17 @@ kable(summary_table12, "html", digits = 2)%>%
 
 The AIC of this model is 5510.1, lower than the previous Poisson regression model with all variables. This indicates that this model explains the observed data better than before.
 
-Additionally, the negative binomial regression model is also built below.
-
-```{r}
-# For the negative binomial regression model
-nb_modified_1 <- glm.nb(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age +
-                   Type.of.Household +
-                   log_House.Age,
-                   data = train_set)
-summary(nb_modified_1)
-summary_table22 <- as.data.frame(summary(nb_modified_1)$coefficients)
-kable(summary_table22, "html", digits = 2)%>%
-  kable_styling(font_size = 12,latex_options =c('scale_down','hold_position'))
-```
-
 Then, we also attempted to remove the explanatory variable, type of household, for one of the categories of this variable is not significant compared with the reference level.
 
 ```{r}
 # remove type of household
 # For the Poisson regression model
-pois_modified_2 <- glm(Total.Number.of.Family.members ~ 
-                   log_Total.Household.Income + 
-                   log_Total.Food.Expenditure + 
-                   Household.Head.Sex + 
-                   Household.Head.Age +
-                   log_House.Age,
+pois_modified_2 <- glm(Members ~ 
+                   log_Income + 
+                   log_Expenditure + 
+                   Sex + 
+                   Household.age +
+                   log_House.age,
                    family = poisson(link="log"),
                    data = train_set)
 summary(pois_modified_2)
@@ -508,38 +591,21 @@ The AIC value of this model is 5615.6, evidently higher than before. Therefore, 
 As for the type of household, two or more nonrelated persons/members shows no significant difference compared to the reference level (Extended family), so is_single_family is used to replaced the Type of household to make the model more concise and precise.
 
 ```{r}
-train_set$is_single_family <- ifelse(train_set$Type.of.Household == "Single Family", 1, 0)
+train_set$is_single_family <- ifelse(train_set$Type == "Single Family", 1, 0)
 # For the Poisson regression model
-pois_modified_3 <- glm(Total.Number.of.Family.members ~ 
-                         log_Total.Household.Income + 
-                         log_Total.Food.Expenditure + 
-                         Household.Head.Sex + 
-                         Household.Head.Age + 
+pois_modified_3 <- glm(Members ~ 
+                         log_Income + 
+                         log_Expenditure + 
+                         Sex + 
+                         Household.age + 
                          is_single_family + 
-                         log_House.Age, 
+                         log_House.age, 
                        family=poisson(link="log"), 
                        data = train_set)
 summary(pois_modified_3)
 ```
 
 From the summary of this model, the AIC is 5508.2, which is the smallest among all the models built. This suggests that the model explains the observed data well while maintaining higher predictive ability and model simplicity. Meanwhile, the residual deviance of this model is 814.37, slightly higher than the residual deviance of the first modified model (pois_modified_1) above. However, considering the degrees of freedom of this model is also higher than the previous model, the slight increase of the residual deviance is reasonable and acceptable.
-
-Additionally, we also build the negative binomial regression model below. But it seems not fit well.
-
-Therefore, taking into account the model's accuracy, interpretability, and simplicity, we regard this model as the best fit.
-
-```{r}
-# For the negative binomial regression model
-nb_modified_3 <- glm.nb(Total.Number.of.Family.members ~ 
-                          log_Total.Household.Income + 
-                          log_Total.Food.Expenditure + 
-                          Household.Head.Sex + 
-                          Household.Head.Age + 
-                          is_single_family + 
-                          log_House.Age, 
-                        data = train_set)
-summary(nb_modified_3)
-```
 
 The table of AIC and Residual deviances is presented below.
 
@@ -551,36 +617,47 @@ model_comparison <- data.frame(
   stringsAsFactors = FALSE)
 
 model_comparison <- rbind(model_comparison, 
-                          c("Poisson", AIC(model_pois), deviance(model_pois)),
-                          c("Negative Binomial", AIC(model_nb), deviance(model_nb)),
-                          c("Poisson_modified_1", AIC(pois_modified_1), deviance(pois_modified_1)),
-                          c("Negative Binomial_modified_1", AIC(nb_modified_1), deviance(nb_modified_1)),
-                          c("Poisson_modified_3", AIC(pois_modified_3), deviance(pois_modified_3)),
-                          c("Negative Binomial_modified_3", AIC(nb_modified_3), deviance(nb_modified_3)))
+                          c("Poisson", AIC(model_pois), 
+                            deviance(model_pois)),
+                          c("Negative Binomial", AIC(model_nb), 
+                            deviance(model_nb)),
+                          c("Poisson_modified_1", AIC(pois_modified_1), 
+                            deviance(pois_modified_1)),
+                          c("Poisson_modified_2", AIC(pois_modified_2), 
+                            deviance(pois_modified_2)),
+                          c("Poisson_modified_3", AIC(pois_modified_3), 
+                            deviance(pois_modified_3)))
 
 names(model_comparison) <- c("Model", "AIC","deviance")
 print(model_comparison)
 ```
+Therefore, taking into account the model's accuracy, interpretability, and simplicity, we regard the "Poisson_modified_3" model which has the smallest AIC 5508.18 as the best fit.
 
 # Model prediction performance
 
 ```{r}
 # For the Poisson regression model contains all variables
 predictions <- predict(model_pois,newdata = test_set, type = "response")
-actuals <- test_set$Total.Number.of.Family.members
+actuals <- test_set$Members
 rmse <- sqrt(mean((predictions - actuals)^2))
 print(rmse)
 
 # For the Poisson regression model after stepwise removal
-test_set$is_single_family <- ifelse(train_set$Type.of.Household == "Single Family", 1, 0)
+test_set$is_single_family <- ifelse(train_set$Type== "Single Family", 1, 0)
 predictions <- predict(pois_modified_3, newdata = test_set, type = "response")
-actuals <- test_set$Total.Number.of.Family.members
+actuals <- test_set$Members
 rmse <- sqrt(mean((predictions - actuals)^2))
 print(rmse)
 ```
 
-According to the Root Mean Square Error value(RMSE), it can be seen that the difference between the predicted value and the actual value of the model is small, and the prediction performance of the model is better. However, It can be seen that the RMSE of the model containing all variables is smaller than that of the model after stepwise removal, 1.675\<1.780. Therefore, there may be a slight overfitting issue for the model after stepwise removal.
+According to the Root Mean Square Error value(RMSE), it can be seen that the difference between the predicted value and the actual value of the model is small, and the prediction performance of the model is better. However, It can be seen that the RMSE of the model containing all variables is smaller than that of the model after stepwise removal, 1.675\<1.676. Therefore, there may be a slight overfitting issue for the model after stepwise removal.
 
 # Conclusion
 
-In summary, among the household related variables, we think total household income, total food expenditure, household head sex, household head age, type of household (whether it is single family or not) and house age, these six variables will influence the number of people living in a household significantly.
+In summary, among the household related variables, we think total household income, total food expenditure, household head sex, household head age, type of household (whether it is single family or not) and house age, these six variables will influence the number of people living in a household significantly. The specific model is as follows.
+$$Members = -2.024-0.354*log\_Income+0.728*log\_Expenditure+0.229*Sex-$$
+$$0.002*Household.age-0.299*is\_single\_family-0.060*log\_House.age$$
+From the model results, the coefficients of log_Income, Household.age, is_single_family, and log_House.age are negative, while the coefficients of log_Expenditure and Sex are positive, indicating that as Annual household income, Head of the households age or Age of the building increases, the expected Number of people living in the house decreases. 
+As Annual expenditure by the household on food increases, the expected Number of people living in the house also increases. 
+In addition, the coefficient for SexMale is 0.229083, which implies that the expected Number of people living in the house for households headed by a male is higher compared to a female-headed household, all else being equal. 
+Finally, the variable is_single_family has a negative coefficient (-0.298690), indicating that Single-family households are expected to have a lower Number of people living in their house compared to other household types.
