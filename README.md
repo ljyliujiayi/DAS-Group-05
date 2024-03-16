@@ -42,6 +42,12 @@ This project analyses which household related variables influence the number of 
 • Electricity – Does the house have electricity? (1=Yes, 0=No)
 
 ## Analysis procedure
+1. Data wrangling
+2. Explanatory analysis
+3. Model construction
+4. Model selection
+5. Model prediction performance
+6. Conclusion
 
 ## Instructions
 1. Open 'Group_05_Analysis.qmd' in Rstudio.
