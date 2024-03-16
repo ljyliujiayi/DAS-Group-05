@@ -55,3 +55,4 @@ This project analyses which household related variables influence the number of 
 3. View analysis report via 'Group_05_Analysis.pdf'.
 
 ## Contact information
+For any questions, feel free to contanct Jiaming Lu at 2884504L@student.gla.ac.uk or Jiayi Liu at 2873318L@student.gla.ac.uk.
