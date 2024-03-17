@@ -232,7 +232,7 @@ lower="blank", axisLabels="none")+
 
 # Model Construction(all variables)
 
-By analyzing our data, we can see that the response variable is a count variable. To prevent the problem of underdispersion, we selected and compared four possible feasible models: the Poisson regression model, the generalized Poisson regression model, the negative binomial regression model, and the Quasi-Possion regression.
+By analyzing our data, we can see that the response variable is a count variable. To prevent the problem of underdispersion, we selected and compared four possible feasible models: the Poisson regression model, the generalized Poisson regression model, the negative binomial regression model, and the Quasi-Poisson regression.
 
 ## Poisson regression model
 
