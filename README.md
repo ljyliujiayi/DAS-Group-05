@@ -14,9 +14,9 @@ This project analyses which household related variables influence the number of 
 
 
 
-'Group_05_Analysis.pdf': PDF document created by rendering 'Group_05_Analysis.qmd'
+'Group_05_qmd.pdf': PDF document created by rendering 'Group_05_Analysis.qmd'
 
-(https://github.com/ljyliujiayi/DAS-Group-05/blob/main/Group_05_Analysis.pdf)
+(https://github.com/ljyliujiayi/DAS-Group-05/blob/main/Group_05_qmd.pdf)
 
 ## Variables
 • Total.Household.Income – Annual household income
